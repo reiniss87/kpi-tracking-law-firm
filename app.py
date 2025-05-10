@@ -230,7 +230,7 @@ def main():
         # Reporting period selector
         today = date.today()
         month = st.selectbox("Reporting Month", options=range(1, 13), index=today.month-1, format_func=lambda x: datetime.date(2024, x, 1).strftime('%B'))
-        year = st.selectbox("Reporting Year", options=range(2023, 2026), index=1)
+        year = st.selectbox("Reporting Year", options=range(2025, 2028), index=0)
         
         app_mode = st.radio("Mode", ["Input KPIs", "View Reports"])
         
