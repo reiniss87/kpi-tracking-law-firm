@@ -26,17 +26,17 @@ st.markdown("""
     }
     .stTabs [data-baseweb="tab"] {
         padding: 10px 16px;
-        background-color: #f0f2f6;
+        background-color: rgba(151, 166, 195, 0.25);
         border-radius: 4px 4px 0 0;
     }
     .stTabs [aria-selected="true"] {
         background-color: #4e89ae;
-        color: white;
+        color: white !important;
     }
     .category-card {
         padding: 1.5rem;
         border-radius: 0.5rem;
-        background: white;
+        background: var(--background-color, white);
         box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
         margin-bottom: 1rem;
     }
@@ -46,30 +46,78 @@ st.markdown("""
         margin-bottom: 0.5rem;
     }
     .status-completed {
-        color: green;
+        color: #50C878 !important;  /* Brighter green */
         font-weight: bold;
     }
     .status-in-progress {
-        color: orange;
+        color: #FFB347 !important;  /* Brighter orange */
         font-weight: bold;
     }
     .status-planned {
-        color: blue;
+        color: #5DA9E9 !important;  /* Brighter blue */
         font-weight: bold;
     }
     .status-attention {
-        color: red;
+        color: #FF6B6B !important;  /* Brighter red */
         font-weight: bold;
     }
     .reminder-box {
-        background-color: #fffde7;
+        background-color: rgba(255, 253, 231, 0.2);
         padding: 1rem;
         border-left: 4px solid #ffd54f;
         margin: 1rem 0;
     }
+    /* Dark mode button text fix */
+    button[kind="primary"] {
+        color: white !important;
+    }
+    .stButton button {
+        color: #262730 !important;
+        background-color: #ffffff;
+        border: 1px solid #ddd;
+    }
+    .stDownloadButton button {
+        color: white !important;
+        background-color: #4e89ae;
+    }
+    /* Input field styling */
+    .stTextInput input, .stNumberInput input, .stSelectbox select, .stTextArea textarea {
+        background-color: var(--input-bg-color, white);
+        color: var(--text-color, #262730);
+        border: 1px solid rgba(128, 128, 128, 0.2);
+    }
+    /* Set variables based on theme */
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --background-color: #262730;
+            --text-color: #fafafa;
+            --input-bg-color: #3b3b3b;
+        }
+    }
 </style>
 """, unsafe_allow_html=True)
 
+# Theme detection code with proper indentation
+if st.get_option("theme.base") == "dark":
+    st.markdown("""
+    <style>
+        :root {
+            --background-color: #262730;
+            --text-color: #fafafa;
+            --input-bg-color: #3b3b3b;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+else:
+    st.markdown("""
+    <style>
+        :root {
+            --background-color: white;
+            --text-color: #262730;
+            --input-bg-color: white;
+        }
+    </style>
+    """, unsafe_allow_html=True)
 # Initialize session state for storing data
 if 'kpi_data' not in st.session_state:
     # Check if the CSV file exists
