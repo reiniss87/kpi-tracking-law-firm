@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 import datetime
 import os
+import io  # Add this line
 from datetime import date
 import numpy as np
 
@@ -380,14 +381,45 @@ def main():
                 st.plotly_chart(fig, use_container_width=True)
             
             # Export button
-            if st.button("Export to Excel"):
-                # Generate Excel file
-                output = filtered_data[['partner', 'category', 'metric_name', 'status', 'value_text', 'value_number', 'last_updated']]
-                output.to_excel("kpi_report.xlsx", index=False)
-                st.success("Excel file generated: kpi_report.xlsx")
+           if st.button("Export to Excel"):
+    try:
+        # Create a BytesIO object
+        buffer = io.BytesIO()
+        
+        # Write DataFrame to Excel
+        with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+            filtered_data[['partner', 'category', 'metric_name', 'status', 'value_text', 'value_number', 'last_updated']].to_excel(writer, sheet_name='KPI_Report', index=False)
+            
+            # Get the xlsxwriter workbook and worksheet objects
+            workbook = writer.book
+            worksheet = writer.sheets['KPI_Report']
+            
+            # Add some formatting
+            header_format = workbook.add_format({'bold': True, 'bg_color': '#4e89ae', 'color': 'white'})
+            
+            # Write the column headers with the defined format
+            for col_num, value in enumerate(filtered_data[['partner', 'category', 'metric_name', 'status', 'value_text', 'value_number', 'last_updated']].columns.values):
+                worksheet.write(0, col_num, value, header_format)
                 
-        else:
-            st.info("No data available for the selected filters.")
+            # Adjust column widths
+            worksheet.set_column('A:B', 15)
+            worksheet.set_column('C:C', 20)
+            worksheet.set_column('D:D', 15)
+            worksheet.set_column('E:E', 30)
+            worksheet.set_column('F:F', 10)
+            worksheet.set_column('G:G', 20)
+        
+        # Download button
+        st.download_button(
+            label="Download Excel file",
+            data=buffer.getvalue(),
+            file_name="kpi_report.xlsx",
+            mime="application/vnd.ms-excel"
+        )
+        
+    except Exception as e:
+        st.error(f"Error generating Excel file: {e}")
+        st.info("Make sure you have the required packages installed: openpyxl and xlsxwriter")
 
 if __name__ == "__main__":
     main()
