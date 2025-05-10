@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Apply custom CSS
+# Apply custom CSS with theme variables - NO if/else statements
 st.markdown("""
 <style>
     .main {
@@ -67,7 +67,7 @@ st.markdown("""
         border-left: 4px solid #ffd54f;
         margin: 1rem 0;
     }
-    /* Dark mode button text fix */
+    /* Button styling for better visibility in any mode */
     button[kind="primary"] {
         color: white !important;
     }
@@ -82,17 +82,13 @@ st.markdown("""
     }
     /* Input field styling */
     .stTextInput input, .stNumberInput input, .stSelectbox select, .stTextArea textarea {
-        background-color: var(--input-bg-color, white);
-        color: var(--text-color, #262730);
+        background-color: rgba(255, 255, 255, 0.9);
+        color: #262730;
         border: 1px solid rgba(128, 128, 128, 0.2);
     }
-    /* Set variables based on theme */
-    @media (prefers-color-scheme: dark) {
-        :root {
-            --background-color: #262730;
-            --text-color: #fafafa;
-            --input-bg-color: #3b3b3b;
-        }
+    /* Dark mode fixes for elements */
+    [data-testid="stAppViewContainer"] {
+        color: var(--text-color, #262730);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -399,7 +395,8 @@ def main():
                 status_counts = filtered_data['status'].value_counts().reset_index()
                 status_counts.columns = ['Status', 'Count']
                 
-                fig = px.pie(status_counts, values='Count', names='Status', 
+              # For the pie chart:
+fig = px.pie(status_counts, values='Count', names='Status', 
             color='Status',
             color_discrete_map={
                 'Completed': '#50C878',    # Brighter green
@@ -407,19 +404,17 @@ def main():
                 'Not Started': '#5DA9E9',  # Brighter blue
                 'Needs Attention': '#FF6B6B'  # Brighter red
             })
-# Add this line after creating the figure
+# Ensure text is visible regardless of theme
 fig.update_traces(textfont_color='#262730')
+# Make background transparent to adapt to theme
+fig.update_layout(
+    paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)',
+)
 st.plotly_chart(fig, use_container_width=True)
-            else:
-                # Multiple partners view
-                status_by_partner = pd.crosstab(filtered_data['partner'], filtered_data['status'])
-                
-                # Fill missing statuses with 0
-                for status in status_options:
-                    if status not in status_by_partner.columns:
-                        status_by_partner[status] = 0
-                
-              fig = px.bar(status_by_partner.reset_index().melt(id_vars='partner', var_name='status', value_name='count'),
+
+# For the bar chart:
+fig = px.bar(status_by_partner.reset_index().melt(id_vars='partner', var_name='status', value_name='count'),
             x='partner', y='count', color='status', barmode='stack',
             labels={'partner': 'Partner', 'count': 'Count', 'status': 'Status'},
             color_discrete_map={
@@ -428,11 +423,10 @@ st.plotly_chart(fig, use_container_width=True)
                 'Not Started': '#5DA9E9',  # Brighter blue
                 'Needs Attention': '#FF6B6B'  # Brighter red
             })
-# Add these lines after creating the figure
+# Make background transparent to adapt to theme
 fig.update_layout(
     paper_bgcolor='rgba(0,0,0,0)',
     plot_bgcolor='rgba(0,0,0,0)',
-    font_color='#fafafa' if st.get_option("theme.base") == "dark" else '#262730'
 )
 st.plotly_chart(fig, use_container_width=True)
             
