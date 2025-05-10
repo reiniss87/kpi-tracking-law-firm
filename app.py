@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 import datetime
 import os
-import io  # Add this line
+import io  # Add this for BytesIO
 from datetime import date
 import numpy as np
 
@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Apply custom CSS with theme variables - NO if/else statements
+# Apply custom CSS - Simple version without theme detection
 st.markdown("""
 <style>
     .main {
@@ -26,17 +26,17 @@ st.markdown("""
     }
     .stTabs [data-baseweb="tab"] {
         padding: 10px 16px;
-        background-color: rgba(151, 166, 195, 0.25);
+        background-color: #f0f2f6;
         border-radius: 4px 4px 0 0;
     }
     .stTabs [aria-selected="true"] {
         background-color: #4e89ae;
-        color: white !important;
+        color: white;
     }
     .category-card {
         padding: 1.5rem;
         border-radius: 0.5rem;
-        background: var(--background-color, white);
+        background: white;
         box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
         margin-bottom: 1rem;
     }
@@ -46,74 +46,34 @@ st.markdown("""
         margin-bottom: 0.5rem;
     }
     .status-completed {
-        color: #50C878 !important;  /* Brighter green */
+        color: green;
         font-weight: bold;
     }
     .status-in-progress {
-        color: #FFB347 !important;  /* Brighter orange */
+        color: orange;
         font-weight: bold;
     }
     .status-planned {
-        color: #5DA9E9 !important;  /* Brighter blue */
+        color: blue;
         font-weight: bold;
     }
     .status-attention {
-        color: #FF6B6B !important;  /* Brighter red */
+        color: red;
         font-weight: bold;
     }
     .reminder-box {
-        background-color: rgba(255, 253, 231, 0.2);
+        background-color: #fffde7;
         padding: 1rem;
         border-left: 4px solid #ffd54f;
         margin: 1rem 0;
     }
-    /* Button styling for better visibility in any mode */
-    button[kind="primary"] {
-        color: white !important;
-    }
+    /* Simple button fix for dark mode */
     .stButton button {
         color: #262730 !important;
-        background-color: #ffffff;
-        border: 1px solid #ddd;
-    }
-    .stDownloadButton button {
-        color: white !important;
-        background-color: #4e89ae;
-    }
-    /* Input field styling */
-    .stTextInput input, .stNumberInput input, .stSelectbox select, .stTextArea textarea {
-        background-color: rgba(255, 255, 255, 0.9);
-        color: #262730;
-        border: 1px solid rgba(128, 128, 128, 0.2);
-    }
-    /* Dark mode fixes for elements */
-    [data-testid="stAppViewContainer"] {
-        color: var(--text-color, #262730);
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Theme detection code with proper indentation
-if st.get_option("theme.base") == "dark":
-    st.markdown("""
-    <style>
-        :root {
-            --background-color: #262730;
-            --text-color: #fafafa;
-            --input-bg-color: #3b3b3b;
-        }
-    </style>
-    """, unsafe_allow_html=True)
-else:
-    st.markdown("""
-    <style>
-        :root {
-            --background-color: white;
-            --text-color: #262730;
-            --input-bg-color: white;
-        }
-    </style>
-    """, unsafe_allow_html=True)
 # Initialize session state for storing data
 if 'kpi_data' not in st.session_state:
     # Check if the CSV file exists
@@ -126,7 +86,7 @@ if 'kpi_data' not in st.session_state:
             'value_text', 'value_number', 'date_value', 'last_updated'
         ])
 
-# Define partners - Ineta removed
+# Define partners - INETA REMOVED
 partners = ["Gints", "Debora", "Jūlija", "Brigita", "Jānis", "Reinis"]
 
 # Define KPI categories and metrics
@@ -395,81 +355,57 @@ def main():
                 status_counts = filtered_data['status'].value_counts().reset_index()
                 status_counts.columns = ['Status', 'Count']
                 
-              # For the pie chart:
-fig = px.pie(status_counts, values='Count', names='Status', 
-            color='Status',
-            color_discrete_map={
-                'Completed': '#50C878',    # Brighter green
-                'In Progress': '#FFB347',  # Brighter orange
-                'Not Started': '#5DA9E9',  # Brighter blue
-                'Needs Attention': '#FF6B6B'  # Brighter red
-            })
-# Ensure text is visible regardless of theme
-fig.update_traces(textfont_color='#262730')
-# Make background transparent to adapt to theme
-fig.update_layout(
-    paper_bgcolor='rgba(0,0,0,0)',
-    plot_bgcolor='rgba(0,0,0,0)',
-)
-st.plotly_chart(fig, use_container_width=True)
-
-# For the bar chart:
-fig = px.bar(status_by_partner.reset_index().melt(id_vars='partner', var_name='status', value_name='count'),
-            x='partner', y='count', color='status', barmode='stack',
-            labels={'partner': 'Partner', 'count': 'Count', 'status': 'Status'},
-            color_discrete_map={
-                'Completed': '#50C878',    # Brighter green
-                'In Progress': '#FFB347',  # Brighter orange
-                'Not Started': '#5DA9E9',  # Brighter blue
-                'Needs Attention': '#FF6B6B'  # Brighter red
-            })
-# Make background transparent to adapt to theme
-fig.update_layout(
-    paper_bgcolor='rgba(0,0,0,0)',
-    plot_bgcolor='rgba(0,0,0,0)',
-)
-st.plotly_chart(fig, use_container_width=True)
-            
-            # Export button
-           if st.button("Export to Excel"):
-    try:
-        # Create a BytesIO object
-        buffer = io.BytesIO()
-        
-        # Write DataFrame to Excel
-        with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-            filtered_data[['partner', 'category', 'metric_name', 'status', 'value_text', 'value_number', 'last_updated']].to_excel(writer, sheet_name='KPI_Report', index=False)
-            
-            # Get the xlsxwriter workbook and worksheet objects
-            workbook = writer.book
-            worksheet = writer.sheets['KPI_Report']
-            
-            # Add some formatting
-            header_format = workbook.add_format({'bold': True, 'bg_color': '#4e89ae', 'color': 'white'})
-            
-            # Write the column headers with the defined format
-            for col_num, value in enumerate(filtered_data[['partner', 'category', 'metric_name', 'status', 'value_text', 'value_number', 'last_updated']].columns.values):
-                worksheet.write(0, col_num, value, header_format)
+                fig = px.pie(status_counts, values='Count', names='Status', 
+                            color='Status',
+                            color_discrete_map={
+                                'Completed': '#50C878',
+                                'In Progress': '#FFB347',
+                                'Not Started': '#5DA9E9',
+                                'Needs Attention': '#FF6B6B'
+                            })
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                # Multiple partners view
+                status_by_partner = pd.crosstab(filtered_data['partner'], filtered_data['status'])
                 
-            # Adjust column widths
-            worksheet.set_column('A:B', 15)
-            worksheet.set_column('C:C', 20)
-            worksheet.set_column('D:D', 15)
-            worksheet.set_column('E:E', 30)
-            worksheet.set_column('F:F', 10)
-            worksheet.set_column('G:G', 20)
-        
-        # Download button
-        st.download_button(
-            label="Download Excel file",
-            data=buffer.getvalue(),
-            file_name="kpi_report.xlsx",
-            mime="application/vnd.ms-excel"
-        )
-        
-    except Exception as e:
-        st.error(f"Error generating Excel file: {e}")
-        st.info("Make sure you have the required packages installed: openpyxl and xlsxwriter")
+                # Fill missing statuses with 0
+                for status in status_options:
+                    if status not in status_by_partner.columns:
+                        status_by_partner[status] = 0
+                
+                fig = px.bar(status_by_partner.reset_index().melt(id_vars='partner', var_name='status', value_name='count'),
+                            x='partner', y='count', color='status', barmode='stack',
+                            labels={'partner': 'Partner', 'count': 'Count', 'status': 'Status'},
+                            color_discrete_map={
+                                'Completed': '#50C878',
+                                'In Progress': '#FFB347',
+                                'Not Started': '#5DA9E9',
+                                'Needs Attention': '#FF6B6B'
+                            })
+                st.plotly_chart(fig, use_container_width=True)
+            
+            # Excel export with BytesIO
+            if st.button("Export to Excel"):
+                try:
+                    # Create a BytesIO object
+                    buffer = io.BytesIO()
+                    
+                    # Write DataFrame to Excel
+                    filtered_data[['partner', 'category', 'metric_name', 'status', 'value_text', 'value_number', 'last_updated']].to_excel(buffer, index=False)
+                    
+                    # Download button
+                    st.download_button(
+                        label="Download Excel file",
+                        data=buffer.getvalue(),
+                        file_name="kpi_report.xlsx",
+                        mime="application/vnd.ms-excel"
+                    )
+                    
+                except Exception as e:
+                    st.error(f"Error generating Excel file: {e}")
+                
+        else:
+            st.info("No data available for the selected filters.")
 
 if __name__ == "__main__":
     main()
