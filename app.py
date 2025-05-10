@@ -82,8 +82,8 @@ if 'kpi_data' not in st.session_state:
             'value_text', 'value_number', 'date_value', 'last_updated'
         ])
 
-# Define partners
-partners = ["Gints", "Debora", "Jūlija", "Brigita", "Jānis", "Reinis", "Ineta"]
+# Define partners - Ineta removed
+partners = ["Gints", "Debora", "Jūlija", "Brigita", "Jānis", "Reinis"]
 
 # Define KPI categories and metrics
 kpi_structure = {
@@ -352,14 +352,16 @@ def main():
                 status_counts.columns = ['Status', 'Count']
                 
                 fig = px.pie(status_counts, values='Count', names='Status', 
-                            color='Status',
-                            color_discrete_map={
-                                'Completed': 'green',
-                                'In Progress': 'orange',
-                                'Not Started': 'blue',
-                                'Needs Attention': 'red'
-                            })
-                st.plotly_chart(fig, use_container_width=True)
+            color='Status',
+            color_discrete_map={
+                'Completed': '#50C878',    # Brighter green
+                'In Progress': '#FFB347',  # Brighter orange
+                'Not Started': '#5DA9E9',  # Brighter blue
+                'Needs Attention': '#FF6B6B'  # Brighter red
+            })
+# Add this line after creating the figure
+fig.update_traces(textfont_color='#262730')
+st.plotly_chart(fig, use_container_width=True)
             else:
                 # Multiple partners view
                 status_by_partner = pd.crosstab(filtered_data['partner'], filtered_data['status'])
@@ -369,16 +371,22 @@ def main():
                     if status not in status_by_partner.columns:
                         status_by_partner[status] = 0
                 
-                fig = px.bar(status_by_partner.reset_index().melt(id_vars='partner', var_name='status', value_name='count'),
-                            x='partner', y='count', color='status', barmode='stack',
-                            labels={'partner': 'Partner', 'count': 'Count', 'status': 'Status'},
-                            color_discrete_map={
-                                'Completed': 'green',
-                                'In Progress': 'orange',
-                                'Not Started': 'blue',
-                                'Needs Attention': 'red'
-                            })
-                st.plotly_chart(fig, use_container_width=True)
+              fig = px.bar(status_by_partner.reset_index().melt(id_vars='partner', var_name='status', value_name='count'),
+            x='partner', y='count', color='status', barmode='stack',
+            labels={'partner': 'Partner', 'count': 'Count', 'status': 'Status'},
+            color_discrete_map={
+                'Completed': '#50C878',    # Brighter green
+                'In Progress': '#FFB347',  # Brighter orange
+                'Not Started': '#5DA9E9',  # Brighter blue
+                'Needs Attention': '#FF6B6B'  # Brighter red
+            })
+# Add these lines after creating the figure
+fig.update_layout(
+    paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)',
+    font_color='#fafafa' if st.get_option("theme.base") == "dark" else '#262730'
+)
+st.plotly_chart(fig, use_container_width=True)
             
             # Export button
            if st.button("Export to Excel"):
